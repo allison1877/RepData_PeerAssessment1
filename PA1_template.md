@@ -9,7 +9,7 @@ Steps:
 - Check columns and update format of date column  
 - Print first six rows to check data
 
-        setwd("C:/Users/Allison.Moore/Desktop/Coursera/RepData_PeerAssessment1/activity/")
+        setwd("C:/Users/Allison.Moore/Desktop/Coursera/RepData_PeerAssessment1v2/RepData_PeerAssessment1/")
         activity <- read.csv("activity.csv", header = TRUE)
         str(activity$date)
 
