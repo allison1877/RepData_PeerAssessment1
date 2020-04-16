@@ -1,25 +1,132 @@
 ---
 title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+date: April 16, 2020
+output: md_document
 ---
 
+This is an R Markdown document for Week 2 in Reproducible Research using the activity data.
 
-## Loading and preprocessing the data
+### **1. Code for reading in the dataset and/or processing the data**  
+Steps:  
+  - Set working directory  
+  - Read in the data  
+  - Check columns and update format of date column  
+  - Print first six rows to check data  
+      
+```{r, echo=TRUE}
+    setwd("C:/Users/Allison.Moore/Desktop/Coursera/RepData_PeerAssessment1/activity/")
+    activity <- read.csv("activity.csv", header = TRUE)
+    str(activity$date)
+    activity$date <- as.POSIXct(strptime(activity$date, "%Y-%m-%d"))
+    
+    head(activity)
+```
 
+### **2. Histogram of the total number of steps taken each day**  
 
+Calculate the sum of steps per day and graph that using a histogram
 
-## What is mean total number of steps taken per day?
+```{r, echo=TRUE}
+steps_sum <- tapply(activity$steps, activity$date, FUN=sum, na.rm = TRUE)
+hist(steps_sum, main = "Histogram of Total Steps", xlab = "Sum of Steps", col = "lightblue")
 
+```
 
+### **3. Mean and median number of steps taken each day**  
 
-## What is the average daily activity pattern?
+Look at the overall mean and median for steps
+```{r, echo=TRUE}
+    mean(activity$steps, na.rm = TRUE)
+    median(activity$steps, na.rm = TRUE)
+```
 
+Calculate the mean and median by date and output
 
+```{r, echo=TRUE}
+    steps_mean <- aggregate(steps ~ date, data = activity, FUN=mean, na.rm=TRUE)
+    steps_median <- aggregate(steps ~ date, data = activity, FUN=median, na.rm=TRUE)
+    
+        steps_summary <- merge(x = steps_mean, y = steps_median, by = c("date", "date"))
+        colnames(steps_summary) <- c("Date", "Mean Steps", "Median Steps")
+        print(steps_summary)
+```
 
-## Imputing missing values
+### **4.Time series plot of the average number of steps taken**
+```{r, echo=TRUE}
+  avg_steps <- aggregate(steps ~ interval, data = activity, FUN=mean, na.rm = TRUE)
+   with(avg_steps, plot(interval, steps, type = "l", 
+                        main = "Average Number of Steps Taken Across All Days",
+                        xlab = "5-Minute Interval", ylab = "Average Steps"))
+```
 
+### **5. The 5-minute interval that, on average, contains the maximum number of steps**
 
+This will output the row it occurs, the interval, and the maximum steps
+```{r, echo=TRUE}
+  avg_steps[which.max(avg_steps$steps), ]
+```
 
-## Are there differences in activity patterns between weekdays and weekends?
+### **6. Code to describe and show a strategy for imputing missing data**  
+
+Results:  
+- The overall mean did not change because we imputed with the column mean  
+- The overall median did not change either because there were only 2304 missing values and this was not enough to change the median  
+- Some of the by day means and medians changed  
+- The histograms changed  
+- Overall: Change to graphs of data but little impact to overall summary statistics because imputated data only accounted for 13% of data  
+
+Number of missing values in the dataset
+```{r, echo=TRUE}
+sum(!complete.cases(activity))
+```
+
+Fill in the missing values with the overall mean and show the new file
+```{r, echo=TRUE}
+activity$steps[is.na(activity$steps)] = mean(activity$steps, na.rm = TRUE)
+head(activity, 10)
+```
+
+Using the new data - Look at the overall mean and median for steps
+```{r, echo=TRUE}
+    mean(activity$steps, na.rm = TRUE)
+    median(activity$steps, na.rm = TRUE)
+```
+
+Using the new data - Calculate the mean and median by date 
+
+```{r, echo=TRUE}
+    steps_mean <- aggregate(steps ~ date, data = activity, FUN=mean, na.rm=TRUE)
+    steps_median <- aggregate(steps ~ date, data = activity, FUN=median, na.rm=TRUE)
+    
+        steps_summary <- merge(x = steps_mean, y = steps_median, by = c("date", "date"))
+        colnames(steps_summary) <- c("Date", "Mean Steps", "Median Steps")
+        print(steps_summary)
+```
+
+### **7. Histogram of the total number of steps taken each day after missing values are imputed**
+
+Using the new data - Calculate the sum of steps per day and graph that using a histogram.  This should be different from the previous histogram.
+
+```{r, echo=TRUE}
+steps_sum <- tapply(activity$steps, activity$date, FUN=sum, na.rm = TRUE)
+hist(steps_sum, main = "Histogram of Total Steps with Imputation", xlab = "Sum of Steps ", col= "blue")
+
+```
+
+### **8.  Panel plot comparing the average number of steps taken per 5-minute interval across weekdays and weekends**
+Steps:  
+- Create a new factor for weekday or weekend  
+- Make a panel plot
+```{r, echo=TRUE}
+activity$daytype <- ifelse(weekdays(activity$date) %in% c("Saturday", "Sunday"), "Weekend", "Weekday")
+head(activity)
+```
+
+```{r, echo=TRUE}
+  avg_steps2 <- aggregate(steps ~ interval + daytype, data = activity, FUN=mean, na.rm = TRUE)
+
+library(lattice)
+xyplot(avg_steps2$steps ~ avg_steps2$interval | avg_steps2$daytype, type = "l",
+      xlab = "Interval", ylab = "Number of Steps", col = "blue")
+```
+
